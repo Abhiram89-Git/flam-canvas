@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Drawing Canvas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1>🎨 Collaborative Canvas</h1>
+        <p class="status" id="status">Connecting...</p>
+      </div>
+      <div class="header-right">
+        <div class="room-info">
+          <label for="roomInput">Room ID:</label>
+          <input type="text" id="roomInput" placeholder="Enter room ID" value="default-room">
+          <button id="joinBtn" class="btn btn-primary">Join Room</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="tool-group">
+          <label for="colorPicker">Color:</label>
+          <input type="color" id="colorPicker" value="#000000">
+        </div>
+
+        <div class="tool-group">
+          <label for="brushSize">Size:</label>
+          <input type="range" id="brushSize" min="1" max="50" value="3">
+          <span id="sizeDisplay">3px</span>
+        </div>
+
+        <div class="tool-group">
+          <button id="undoBtn" class="btn btn-secondary" title="Undo (Ctrl+Z)">↶ Undo</button>
+          <button id="redoBtn" class="btn btn-secondary" title="Redo (Ctrl+Y)">↷ Redo</button>
+        </div>
+
+        <div class="tool-group">
+          <button id="clearBtn" class="btn btn-danger" title="Clear Canvas">🗑️ Clear</button>
+        </div>
+
+        <div class="tool-group">
+          <button id="downloadBtn" class="btn btn-secondary" title="Download Drawing">⬇️ Download</button>
+        </div>
+      </div>
+
+      <!-- Canvas Area -->
+      <div class="canvas-container">
+        <canvas id="drawingCanvas"></canvas>
+        <div class="cursor-container" id="cursorContainer"></div>
+      </div>
+
+      <!-- Sidebar with User List -->
+      <aside class="sidebar">
+        <h3>👥 Connected Users</h3>
+        <div class="user-list" id="userList">
+          <p class="placeholder">No users connected</p>
+        </div>
+
+        <h3>📊 Statistics</h3>
+        <div class="stats">
+          <div class="stat-item">
+            <span>Strokes:</span>
+            <strong id="strokeCount">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>Your Strokes:</span>
+            <strong id="myStrokeCount">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>Users Online:</span>
+            <strong id="userCount">0</strong>
+          </div>
+        </div>
+
+        <h3>⌨️ Shortcuts</h3>
+        <div class="shortcuts">
+          <p><kbd>Ctrl</kbd> + <kbd>Z</kbd> = Undo</p>
+          <p><kbd>Ctrl</kbd> + <kbd>Y</kbd> = Redo</p>
+          <p><kbd>Ctrl</kbd> + <kbd>L</kbd> = Clear</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="canvas.js"></script>
+  <script src="websocket.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
