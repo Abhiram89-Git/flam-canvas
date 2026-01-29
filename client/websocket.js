@@ -24,7 +24,7 @@ class SocketManager {
    */
   connect() {
     console.log('[SOCKET] Connecting to server...');
-    this.socket = io();
+    this.socket = io("https://flam-canvas.up.railway.app");
 
     // Connection events
     this.socket.on('connect', () => {
