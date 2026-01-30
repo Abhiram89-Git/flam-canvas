@@ -10,14 +10,30 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'https://flam-canvas.vercel.app',
+      'https://*.vercel.app'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   },
   transports: ['websocket', 'polling']
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:3001',
+    'https://flam-canvas.vercel.app',
+    'https://*.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve static files from client directory
@@ -111,7 +127,6 @@ io.on('connection', (socket) => {
       if (undoneStroke) {
         const newHistory = room.stateManager.getHistory();
         console.log('[SERVER] Undo successful! New history length:', newHistory.length);
-        console.log('[SERVER] Sending history with strokes:', newHistory.map(s => ({ start: s.start, end: s.end })));
         
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
@@ -138,8 +153,6 @@ io.on('connection', (socket) => {
       if (redoStroke) {
         const newHistory = room.stateManager.getHistory();
         console.log('[SERVER] Redo successful! New history length:', newHistory.length);
-        console.log('[SERVER] Redone stroke:', { start: redoStroke.start, end: redoStroke.end });
-        console.log('[SERVER] Sending history with strokes:', newHistory.map(s => ({ start: s.start, end: s.end })));
         
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
@@ -210,6 +223,6 @@ app.get('/', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`[SERVER] Server running on http://localhost:${PORT}`);
+  console.log(`[SERVER] Server running on port ${PORT}`);
   console.log(`[SERVER] WebSocket server ready for connections`);
 });

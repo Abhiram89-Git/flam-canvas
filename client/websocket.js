@@ -25,12 +25,21 @@ class SocketManager {
   connect() {
     console.log('[SOCKET] Connecting to server...');
     
-    // Auto-detect environment: if we're on localhost, connect to localhost
-    // Otherwise connect to the current origin (Railway)
-    let serverUrl = window.location.origin;
+    // Determine server URL based on environment
+    let serverUrl;
     
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Local development
       serverUrl = 'http://localhost:3000';
+      console.log('[SOCKET] Using localhost server');
+    } else if (window.location.hostname.includes('vercel.app')) {
+      // Vercel frontend - connect to Railway backend
+      serverUrl = 'https://flam-canvas.up.railway.app';
+      console.log('[SOCKET] Using Railway backend from Vercel');
+    } else {
+      // Other environments - use current origin
+      serverUrl = window.location.origin;
+      console.log('[SOCKET] Using current origin:', serverUrl);
     }
     
     console.log('[SOCKET] Server URL:', serverUrl);
@@ -39,7 +48,8 @@ class SocketManager {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      transports: ['websocket', 'polling']
     });
 
     // Connection events
