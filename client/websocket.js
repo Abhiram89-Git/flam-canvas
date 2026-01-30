@@ -1,3 +1,8 @@
+/**
+ * Socket.IO Communication Module
+ * Handles real-time communication with server
+ */
+
 class SocketManager {
   constructor() {
     this.socket = null;
@@ -33,9 +38,9 @@ class SocketManager {
       serverUrl = 'http://localhost:3000';
       console.log('[SOCKET] Using localhost server');
     } else if (window.location.hostname.includes('vercel.app')) {
-      // Vercel frontend - connect to Railway backend
-      serverUrl = 'https://flam-canvas.up.railway.app';
-      console.log('[SOCKET] Using Railway backend from Vercel');
+      // Vercel frontend - connect to Railway PUBLIC domain
+      serverUrl = 'https://flam-canvas-production.up.railway.app';
+      console.log('[SOCKET] Using Railway PUBLIC domain from Vercel');
     } else {
       // Other environments - use current origin
       serverUrl = window.location.origin;
