@@ -109,11 +109,14 @@ io.on('connection', (socket) => {
       const undoneStroke = room.stateManager.undoLastStrokeByUser(socket.id);
       
       if (undoneStroke) {
-        console.log('[SERVER] Undo successful! New history length:', room.stateManager.getHistory().length);
+        const newHistory = room.stateManager.getHistory();
+        console.log('[SERVER] Undo successful! New history length:', newHistory.length);
+        console.log('[SERVER] Sending history with strokes:', newHistory.map(s => ({ start: s.start, end: s.end })));
+        
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
           userId: socket.id,
-          history: room.stateManager.getHistory(),
+          history: newHistory,
           action: 'undo'
         });
       } else {
@@ -133,11 +136,15 @@ io.on('connection', (socket) => {
       const redoStroke = room.stateManager.redoStrokeByUser(socket.id);
       
       if (redoStroke) {
-        console.log('[SERVER] Redo successful! New history length:', room.stateManager.getHistory().length);
+        const newHistory = room.stateManager.getHistory();
+        console.log('[SERVER] Redo successful! New history length:', newHistory.length);
+        console.log('[SERVER] Redone stroke:', { start: redoStroke.start, end: redoStroke.end });
+        console.log('[SERVER] Sending history with strokes:', newHistory.map(s => ({ start: s.start, end: s.end })));
+        
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
           userId: socket.id,
-          history: room.stateManager.getHistory(),
+          history: newHistory,
           action: 'redo'
         });
       } else {

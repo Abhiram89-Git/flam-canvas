@@ -23,7 +23,7 @@ class CollaborativeDrawingApp {
     this.cursorThrottleTimer = null;
     this.currentRoomId = null;
 
-    // CRITICAL: SET UP CALLBACKS FIRST, BEFORE CONNECTING
+    // Setup callbacks BEFORE connecting
     this.setupSocketCallbacks();
     this.init();
   }
@@ -32,7 +32,6 @@ class CollaborativeDrawingApp {
     console.log('[APP] Starting');
     this.setupUIListeners();
     this.setupCanvasCallbacks();
-    // NOW connect after callbacks are set
     this.socketManager.connect();
     this.setupKeyboardShortcuts();
     this.resizeCanvasToFitWindow();
@@ -51,7 +50,6 @@ class CollaborativeDrawingApp {
     });
 
     this.undoBtn.addEventListener('click', () => {
-      console.log('[APP] Undo button clicked');
       if (!this.currentRoomId) {
         alert('Join a room first!');
         return;
@@ -60,7 +58,6 @@ class CollaborativeDrawingApp {
     });
 
     this.redoBtn.addEventListener('click', () => {
-      console.log('[APP] Redo button clicked');
       if (!this.currentRoomId) {
         alert('Join a room first!');
         return;
@@ -96,24 +93,14 @@ class CollaborativeDrawingApp {
   }
 
   setupCanvasCallbacks() {
-    this.drawingCanvas.onStrokeStart = () => {
-      console.log('[APP] Stroke start');
-    };
-
-    this.drawingCanvas.onStrokeMove = (strokeData) => {
-      if (this.throttleTimer) {
-        clearTimeout(this.throttleTimer);
+    this.drawingCanvas.onStrokeComplete = (stroke) => {
+      // When a complete stroke is drawn, send it
+      if (this.currentRoomId && this.socketManager.isConnected) {
+        console.log('[APP] Sending stroke with', stroke.points.length, 'points');
+        this.socketManager.emitDrawingStep(stroke);
+        this.allStrokes.push(stroke);
+        this.updateStrokeCount();
       }
-
-      this.throttleTimer = setTimeout(() => {
-        if (this.currentRoomId && this.socketManager.isConnected) {
-          this.socketManager.emitDrawingStep(strokeData);
-        }
-      }, 50);
-    };
-
-    this.drawingCanvas.onStrokeEnd = () => {
-      console.log('[APP] Stroke end');
     };
 
     this.drawingCanvas.onCursorMove = (position) => {
@@ -130,8 +117,6 @@ class CollaborativeDrawingApp {
   }
 
   setupSocketCallbacks() {
-    console.log('[APP] Setting up socket callbacks BEFORE connect');
-
     this.socketManager.onConnect = () => {
       console.log('[APP] Connected!');
       this.updateStatus('Connected', true);
@@ -139,11 +124,11 @@ class CollaborativeDrawingApp {
     };
 
     this.socketManager.onDisconnect = () => {
-      console.log('[APP] Disconnected');
       this.updateStatus('Disconnected', false);
     };
 
     this.socketManager.onDrawEvent = ({ userId, stroke }) => {
+      console.log('[APP] Draw event - stroke points:', stroke.points ? stroke.points.length : 'unknown');
       this.drawingCanvas.drawStroke(stroke);
       this.allStrokes.push(stroke);
       this.updateStrokeCount();
@@ -170,38 +155,28 @@ class CollaborativeDrawingApp {
     };
 
     this.socketManager.onHistoryLoaded = ({ history, users }) => {
-      console.log('[APP] History loaded:', history.length);
+      console.log('[APP] History loaded:', history.length, 'strokes');
       this.allStrokes = history;
       this.drawingCanvas.redrawCanvas(history);
       this.updateStrokeCount();
       this.updateUserList();
     };
 
-    // CRITICAL: This callback MUST be set before connect!
     this.socketManager.onHistoryUpdated = ({ userId, history, action }) => {
-      console.log('[APP] *** onHistoryUpdated CALLED ***');
-      console.log('[APP] Action:', action);
-      console.log('[APP] New history length:', history.length);
+      console.log('[APP] History updated - action:', action, 'strokes:', history.length);
       
-      // Update the history
       this.allStrokes = history;
-      
-      // Redraw the canvas
       this.drawingCanvas.redrawCanvas(history);
-      
-      // Update count
       this.updateStrokeCount();
       
-      // Show notification
       if (action === 'undo') {
-        this.showNotification('Undone! (' + history.length + ' strokes)');
+        this.showNotification('Undone!');
       } else if (action === 'redo') {
-        this.showNotification('Redone! (' + history.length + ' strokes)');
+        this.showNotification('Redone!');
       }
     };
 
     this.socketManager.onCanvasCleared = ({ userId }) => {
-      console.log('[APP] Canvas cleared');
       this.allStrokes = [];
       this.drawingCanvas.clearCanvas();
       this.updateStrokeCount();
@@ -219,7 +194,6 @@ class CollaborativeDrawingApp {
 
     const userId = 'User-' + Math.random().toString(36).substr(2, 9);
     this.currentRoomId = roomId;
-    console.log('[APP] Joining room:', roomId);
     
     this.socketManager.joinRoom(roomId, userId);
     this.showNotification('Joined: ' + roomId);
@@ -277,13 +251,9 @@ class CollaborativeDrawingApp {
   }
 }
 
-console.log('[APP] Loading main.js');
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[APP] DOM ready');
   window.app = new CollaborativeDrawingApp();
-  console.log('[APP] App initialized');
 });
 
 const style = document.createElement('style');
 style.textContent = '@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }';
-document.head.appendChild(style);
