@@ -24,7 +24,23 @@ class SocketManager {
    */
   connect() {
     console.log('[SOCKET] Connecting to server...');
-    this.socket = io();
+    
+    // Auto-detect environment: if we're on localhost, connect to localhost
+    // Otherwise connect to the current origin (Railway)
+    let serverUrl = window.location.origin;
+    
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      serverUrl = 'http://localhost:3000';
+    }
+    
+    console.log('[SOCKET] Server URL:', serverUrl);
+    
+    this.socket = io(serverUrl, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
 
     // Connection events
     this.socket.on('connect', () => {
@@ -93,7 +109,6 @@ class SocketManager {
     // CRITICAL: History updated event (for undo/redo)
     this.socket.on('history_updated', (data) => {
       console.log('[SOCKET] *** HISTORY_UPDATED EVENT RECEIVED ***');
-      console.log('[SOCKET] Data:', data);
       console.log('[SOCKET] Action:', data.action);
       console.log('[SOCKET] History length:', data.history.length);
       
@@ -120,6 +135,10 @@ class SocketManager {
     // Error handling
     this.socket.on('error', (error) => {
       console.error('[SOCKET] Socket error:', error);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('[SOCKET] Connection error:', error);
     });
   }
 
