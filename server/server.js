@@ -44,7 +44,7 @@ const roomManager = new RoomManager();
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`[SERVER] User connected: ${socket.id}`);
+  console.log(` User connected: ${socket.id}`);
 
   // User joins a room
   socket.on('join_room', ({ roomId, userId }) => {
@@ -60,8 +60,8 @@ io.on('connection', (socket) => {
     // Add user to room
     room.addUser({ id: socket.id, userId, color: generateRandomColor() });
 
-    console.log(`[SERVER] ${userId} joined room ${roomId}`);
-    console.log(`[SERVER] Room ${roomId} has ${room.users.length} users`);
+    console.log(` ${userId} joined room ${roomId}`);
+    console.log(` Room ${roomId} has ${room.users.length} users`);
 
     // Send drawing history to the new user
     socket.emit('load_history', {
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
 
   // Handle drawing events
   socket.on('drawing_step', ({ roomId, stroke }) => {
-    console.log('[SERVER] Drawing step received');
+    console.log(' Drawing step received');
     const room = roomManager.getRoom(roomId);
     if (room) {
       stroke.userId = socket.id;
@@ -118,15 +118,15 @@ io.on('connection', (socket) => {
 
   // Handle undo
   socket.on('undo', ({ roomId }) => {
-    console.log('[SERVER] UNDO REQUEST received for room:', roomId);
+    console.log(' UNDO REQUEST received for room:', roomId);
     const room = roomManager.getRoom(roomId);
     if (room) {
-      console.log('[SERVER] Room found, current history:', room.stateManager.getHistory().length);
+      console.log(' Room found, current history:', room.stateManager.getHistory().length);
       const undoneStroke = room.stateManager.undoLastStrokeByUser(socket.id);
       
       if (undoneStroke) {
         const newHistory = room.stateManager.getHistory();
-        console.log('[SERVER] Undo successful! New history length:', newHistory.length);
+        console.log(' Undo successful! New history length:', newHistory.length);
         
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
@@ -135,24 +135,24 @@ io.on('connection', (socket) => {
           action: 'undo'
         });
       } else {
-        console.log('[SERVER] Undo failed - no stroke to undo');
+        console.log('Undo failed - no stroke to undo');
       }
     } else {
-      console.log('[SERVER] Room not found:', roomId);
+      console.log('Room not found:', roomId);
     }
   });
 
   // Handle redo
   socket.on('redo', ({ roomId }) => {
-    console.log('[SERVER] REDO REQUEST received for room:', roomId);
+    console.log('REDO REQUEST received for room:', roomId);
     const room = roomManager.getRoom(roomId);
     if (room) {
-      console.log('[SERVER] Room found, current history:', room.stateManager.getHistory().length);
+      console.log('Room found, current history:', room.stateManager.getHistory().length);
       const redoStroke = room.stateManager.redoStrokeByUser(socket.id);
       
       if (redoStroke) {
         const newHistory = room.stateManager.getHistory();
-        console.log('[SERVER] Redo successful! New history length:', newHistory.length);
+        console.log('Redo successful! New history length:', newHistory.length);
         
         // Send the FULL updated history so all clients can redraw correctly
         io.to(roomId).emit('history_updated', {
@@ -161,16 +161,16 @@ io.on('connection', (socket) => {
           action: 'redo'
         });
       } else {
-        console.log('[SERVER] Redo failed - no stroke to redo');
+        console.log(' Redo failed - no stroke to redo');
       }
     } else {
-      console.log('[SERVER] Room not found:', roomId);
+      console.log(' Room not found:', roomId);
     }
   });
 
   // Clear canvas (by current user)
   socket.on('clear_canvas', ({ roomId }) => {
-    console.log('[SERVER] Clear canvas requested');
+    console.log('Clear canvas requested');
     const room = roomManager.getRoom(roomId);
     if (room) {
       room.stateManager.clearHistory();
@@ -186,13 +186,13 @@ io.on('connection', (socket) => {
       
       if (room) {
         room.removeUser(socket.id);
-        console.log(`[SERVER] ${userId} left room ${roomId}`);
-        console.log(`[SERVER] Room ${roomId} now has ${room.users.length} users`);
+        console.log(`${userId} left room ${roomId}`);
+        console.log(`Room ${roomId} now has ${room.users.length} users`);
         
         // If room is empty, delete it
         if (room.users.length === 0) {
           roomManager.deleteRoom(roomId);
-          console.log(`[SERVER] Room ${roomId} deleted (empty)`);
+          console.log(`Room ${roomId} deleted (empty)`);
         } else {
           io.to(roomId).emit('users_updated', { users: room.users });
           io.to(roomId).emit('user_left', {
@@ -202,7 +202,7 @@ io.on('connection', (socket) => {
         }
       }
     }
-    console.log(`[SERVER] User disconnected: ${socket.id}`);
+    console.log(` User disconnected: ${socket.id}`);
   });
 });
 
@@ -223,6 +223,6 @@ app.get('/', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`[SERVER] Server running on port ${PORT}`);
-  console.log(`[SERVER] WebSocket server ready for connections`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`WebSocket server ready for connections`);
 });
