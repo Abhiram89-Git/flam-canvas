@@ -6,6 +6,7 @@ class DrawingCanvas {
     this.isDrawing = false;
     this.currentColor = '#000000';
     this.currentStrokeWidth = 3;
+    this.currentTool = 'brush'; // 'brush' or 'eraser'
     this.lastPosition = { x: 0, y: 0 };
     this.currentStrokePoints = [];
     
@@ -73,17 +74,25 @@ class DrawingCanvas {
     const currentPosition = this.getCanvasCoordinates(e);
 
     if (this.isDrawing) {
-      // Draw the line
-      this.drawLine(
-        this.lastPosition.x,
-        this.lastPosition.y,
-        currentPosition.x,
-        currentPosition.y,
-        this.currentColor,
-        this.currentStrokeWidth
-      );
+      if (this.currentTool === 'eraser') {
+        this.erase(
+          this.lastPosition.x,
+          this.lastPosition.y,
+          currentPosition.x,
+          currentPosition.y,
+          this.currentStrokeWidth
+        );
+      } else {
+        this.drawLine(
+          this.lastPosition.x,
+          this.lastPosition.y,
+          currentPosition.x,
+          currentPosition.y,
+          this.currentColor,
+          this.currentStrokeWidth
+        );
+      }
 
-      // Collect the point
       this.currentStrokePoints.push({ x: currentPosition.x, y: currentPosition.y });
       this.lastPosition = currentPosition;
     }
@@ -95,11 +104,11 @@ class DrawingCanvas {
 
   handlePointerUp(e) {
     if (this.isDrawing) {
-      // Complete the stroke
       const stroke = {
         points: this.currentStrokePoints,
-        color: this.currentColor,
-        width: this.currentStrokeWidth
+        color: this.currentTool === 'eraser' ? 'eraser' : this.currentColor,
+        width: this.currentStrokeWidth,
+        tool: this.currentTool
       };
       
       if (this.onStrokeComplete) {
@@ -115,8 +124,9 @@ class DrawingCanvas {
     if (this.isDrawing) {
       const stroke = {
         points: this.currentStrokePoints,
-        color: this.currentColor,
-        width: this.currentStrokeWidth
+        color: this.currentTool === 'eraser' ? 'eraser' : this.currentColor,
+        width: this.currentStrokeWidth,
+        tool: this.currentTool
       };
       
       if (this.onStrokeComplete) {
@@ -133,6 +143,7 @@ class DrawingCanvas {
     this.ctx.lineWidth = width;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
+    this.ctx.globalCompositeOperation = 'source-over';
 
     this.ctx.beginPath();
     this.ctx.moveTo(fromX, fromY);
@@ -140,24 +151,56 @@ class DrawingCanvas {
     this.ctx.stroke();
   }
 
+  erase(fromX, fromY, toX, toY, width) {
+    this.ctx.lineWidth = width;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+    this.ctx.globalCompositeOperation = 'destination-out';
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(fromX, fromY);
+    this.ctx.lineTo(toX, toY);
+    this.ctx.stroke();
+
+    this.ctx.globalCompositeOperation = 'source-over';
+  }
+
   drawStroke(stroke) {
     if (!stroke || !stroke.points || stroke.points.length === 0) {
       return;
     }
 
-    this.ctx.strokeStyle = stroke.color || '#000000';
-    this.ctx.lineWidth = stroke.width || 3;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
+    if (stroke.tool === 'eraser' || stroke.color === 'eraser') {
+      this.ctx.lineWidth = stroke.width || 3;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.globalCompositeOperation = 'destination-out';
 
-    this.ctx.beginPath();
-    this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      this.ctx.beginPath();
+      this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
 
-    for (let i = 1; i < stroke.points.length; i++) {
-      this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+      for (let i = 1; i < stroke.points.length; i++) {
+        this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+      }
+
+      this.ctx.stroke();
+      this.ctx.globalCompositeOperation = 'source-over';
+    } else {
+      this.ctx.strokeStyle = stroke.color || '#000000';
+      this.ctx.lineWidth = stroke.width || 3;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.globalCompositeOperation = 'source-over';
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+      for (let i = 1; i < stroke.points.length; i++) {
+        this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+      }
+
+      this.ctx.stroke();
     }
-
-    this.ctx.stroke();
   }
 
   redrawCanvas(strokes) {
@@ -182,6 +225,14 @@ class DrawingCanvas {
 
   setStrokeWidth(width) {
     this.currentStrokeWidth = width;
+  }
+
+  setTool(tool) {
+    this.currentTool = tool;
+  }
+
+  getTool() {
+    return this.currentTool;
   }
 
   addGhostCursor(userId, color, userName) {

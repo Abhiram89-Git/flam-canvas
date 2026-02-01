@@ -5,6 +5,8 @@ class CollaborativeDrawingApp {
     this.colorPicker = document.getElementById('colorPicker');
     this.brushSize = document.getElementById('brushSize');
     this.sizeDisplay = document.getElementById('sizeDisplay');
+    this.brushBtn = document.getElementById('brushBtn');
+    this.eraserBtn = document.getElementById('eraserBtn');
     this.undoBtn = document.getElementById('undoBtn');
     this.redoBtn = document.getElementById('redoBtn');
     this.clearBtn = document.getElementById('clearBtn');
@@ -39,16 +41,34 @@ class CollaborativeDrawingApp {
   }
 
   setupUIListeners() {
+    // Tool selection
+    this.brushBtn.addEventListener('click', () => {
+      this.drawingCanvas.setTool('brush');
+      this.brushBtn.classList.add('active');
+      this.eraserBtn.classList.remove('active');
+      this.showNotification('Brush selected');
+    });
+
+    this.eraserBtn.addEventListener('click', () => {
+      this.drawingCanvas.setTool('eraser');
+      this.eraserBtn.classList.add('active');
+      this.brushBtn.classList.remove('active');
+      this.showNotification('Eraser selected');
+    });
+
+    // Color picker
     this.colorPicker.addEventListener('change', (e) => {
       this.drawingCanvas.setColor(e.target.value);
     });
 
+    // Brush size
     this.brushSize.addEventListener('input', (e) => {
       const size = e.target.value;
       this.drawingCanvas.setStrokeWidth(size);
       this.sizeDisplay.textContent = size + 'px';
     });
 
+    // Undo/Redo buttons
     this.undoBtn.addEventListener('click', () => {
       if (!this.currentRoomId) {
         alert('Join a room first!');
@@ -65,6 +85,7 @@ class CollaborativeDrawingApp {
       this.socketManager.requestRedo();
     });
 
+    // Clear button
     this.clearBtn.addEventListener('click', () => {
       if (!this.currentRoomId) {
         alert('Join a room first!');
@@ -75,12 +96,14 @@ class CollaborativeDrawingApp {
       }
     });
 
+    // Download button
     this.downloadBtn.addEventListener('click', () => {
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
       this.drawingCanvas.downloadAsImage(`drawing-${timestamp}.png`);
       this.showNotification('Downloaded!');
     });
 
+    // Join room
     this.joinBtn.addEventListener('click', () => {
       this.joinRoom();
     });
@@ -96,7 +119,7 @@ class CollaborativeDrawingApp {
     this.drawingCanvas.onStrokeComplete = (stroke) => {
       // When a complete stroke is drawn, send it
       if (this.currentRoomId && this.socketManager.isConnected) {
-        console.log('[APP] Sending stroke with', stroke.points.length, 'points');
+        console.log('[APP] Sending stroke with', stroke.points.length, 'points, tool:', stroke.tool);
         this.socketManager.emitDrawingStep(stroke);
         this.allStrokes.push(stroke);
         this.updateStrokeCount();
@@ -124,11 +147,11 @@ class CollaborativeDrawingApp {
     };
 
     this.socketManager.onDisconnect = () => {
-      this.updateStatus('Disconnected', false);
+      this.updateStatus('Connecting...', false);
     };
 
     this.socketManager.onDrawEvent = ({ userId, stroke }) => {
-      console.log('[APP] Draw event - stroke points:', stroke.points ? stroke.points.length : 'unknown');
+      console.log('[APP] Draw event - stroke points:', stroke.points ? stroke.points.length : 'unknown', 'tool:', stroke.tool);
       this.drawingCanvas.drawStroke(stroke);
       this.allStrokes.push(stroke);
       this.updateStrokeCount();
@@ -235,6 +258,13 @@ class CollaborativeDrawingApp {
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
         if (this.currentRoomId) this.socketManager.requestRedo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        if (this.currentRoomId) {
+          if (confirm('Clear canvas?')) {
+            this.socketManager.requestClearCanvas();
+          }
+        }
       }
     });
   }
@@ -254,6 +284,3 @@ class CollaborativeDrawingApp {
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new CollaborativeDrawingApp();
 });
-
-const style = document.createElement('style');
-style.textContent = '@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }';

@@ -3,89 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collaborative Drawing Canvas</title>
+  <title>Canvas Studio - Collaborative Drawing</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
+  <div class="app-wrapper">
     <!-- Header -->
     <header class="header">
-      <div class="header-left">
-        <h1>🎨 Collaborative Canvas</h1>
-        <p class="status" id="status">Connecting...</p>
-      </div>
-      <div class="header-right">
-        <div class="room-info">
-          <label for="roomInput">Room ID:</label>
-          <input type="text" id="roomInput" placeholder="Enter room ID" value="default-room">
-          <button id="joinBtn" class="btn btn-primary">Join Room</button>
+      <div class="header-container">
+        <div class="logo-section">
+          <div class="logo">
+            <i class="fas fa-palette"></i>
+            <div class="logo-text">
+              <h1>Canvas Studio</h1>
+              <p>Collaborative Drawing</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="connection-section">
+          <div class="room-input-group">
+            <input type="text" id="roomInput" placeholder="Enter room ID..." value="default-room" class="room-input">
+            <button id="joinBtn" class="btn btn-primary">
+              <i class="fas fa-sign-in-alt"></i> Join Room
+            </button>
+          </div>
+          <div class="status-badge">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="status">Connecting...</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="tool-group">
-          <label for="colorPicker">Color:</label>
-          <input type="color" id="colorPicker" value="#000000">
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Left Sidebar - Tools -->
+      <aside class="sidebar sidebar-left">
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-brush"></i> Drawing Tools
+          </h3>
+          <div class="tool-buttons">
+            <button id="brushBtn" class="tool-btn active" title="Brush Tool">
+              <i class="fas fa-paintbrush"></i>
+              <span>Brush</span>
+            </button>
+            <button id="eraserBtn" class="tool-btn" title="Eraser Tool">
+              <i class="fas fa-eraser"></i>
+              <span>Eraser</span>
+            </button>
+          </div>
+
+          <div class="tool-section">
+            <label class="tool-label">
+              <i class="fas fa-palette"></i> Color
+            </label>
+            <input type="color" id="colorPicker" value="#000000" class="color-picker">
+          </div>
+
+          <div class="tool-section">
+            <label class="tool-label">
+              <i class="fas fa-expand"></i> Brush Size
+            </label>
+            <div class="size-control">
+              <input type="range" id="brushSize" min="1" max="50" value="3" class="size-slider">
+              <span class="size-display" id="sizeDisplay">3px</span>
+            </div>
+          </div>
         </div>
 
-        <div class="tool-group">
-          <label for="brushSize">Size:</label>
-          <input type="range" id="brushSize" min="1" max="50" value="3">
-          <span id="sizeDisplay">3px</span>
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-history"></i> Actions
+          </h3>
+          <button id="undoBtn" class="btn btn-secondary btn-full" title="Undo (Ctrl+Z)">
+            <i class="fas fa-undo"></i> Undo
+          </button>
+          <button id="redoBtn" class="btn btn-secondary btn-full" title="Redo (Ctrl+Y)">
+            <i class="fas fa-redo"></i> Redo
+          </button>
+          <button id="clearBtn" class="btn btn-danger btn-full" title="Clear Canvas (Ctrl+L)">
+            <i class="fas fa-trash"></i> Clear
+          </button>
+          <button id="downloadBtn" class="btn btn-success btn-full" title="Download Drawing">
+            <i class="fas fa-download"></i> Download
+          </button>
         </div>
 
-        <div class="tool-group">
-          <button id="undoBtn" class="btn btn-secondary" title="Undo (Ctrl+Z)">↶ Undo</button>
-          <button id="redoBtn" class="btn btn-secondary" title="Redo (Ctrl+Y)">↷ Redo</button>
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-keyboard"></i> Shortcuts
+          </h3>
+          <div class="shortcuts">
+            <div class="shortcut-item">
+              <kbd>Ctrl + Z</kbd>
+              <span>Undo</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + Y</kbd>
+              <span>Redo</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + L</kbd>
+              <span>Clear</span>
+            </div>
+          </div>
         </div>
+      </aside>
 
-        <div class="tool-group">
-          <button id="clearBtn" class="btn btn-danger" title="Clear Canvas">🗑️ Clear</button>
-        </div>
-
-        <div class="tool-group">
-          <button id="downloadBtn" class="btn btn-secondary" title="Download Drawing">⬇️ Download</button>
+      <!-- Center - Canvas -->
+      <div class="canvas-wrapper">
+        <div class="canvas-container">
+          <canvas id="drawingCanvas"></canvas>
+          <div class="cursor-container" id="cursorContainer"></div>
+          <div class="canvas-guide">
+            <p></p>
+          </div>
         </div>
       </div>
 
-      <!-- Canvas Area -->
-      <div class="canvas-container">
-        <canvas id="drawingCanvas"></canvas>
-        <div class="cursor-container" id="cursorContainer"></div>
-      </div>
-
-      <!-- Sidebar with User List -->
-      <aside class="sidebar">
-        <h3>👥 Connected Users</h3>
-        <div class="user-list" id="userList">
-          <p class="placeholder">No users connected</p>
-        </div>
-
-        <h3>📊 Statistics</h3>
-        <div class="stats">
-          <div class="stat-item">
-            <span>Strokes:</span>
-            <strong id="strokeCount">0</strong>
-          </div>
-          <div class="stat-item">
-            <span>Your Strokes:</span>
-            <strong id="myStrokeCount">0</strong>
-          </div>
-          <div class="stat-item">
-            <span>Users Online:</span>
-            <strong id="userCount">0</strong>
+      <!-- Right Sidebar - Users & Stats -->
+      <aside class="sidebar sidebar-right">
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-users"></i> Connected Users
+          </h3>
+          <div class="user-list" id="userList">
+            <p class="empty-state">
+              <i class="fas fa-user-slash"></i>
+              No users connected
+            </p>
           </div>
         </div>
 
-        <h3>⌨️ Shortcuts</h3>
-        <div class="shortcuts">
-          <p><kbd>Ctrl</kbd> + <kbd>Z</kbd> = Undo</p>
-          <p><kbd>Ctrl</kbd> + <kbd>Y</kbd> = Redo</p>
-          <p><kbd>Ctrl</kbd> + <kbd>L</kbd> = Clear</p>
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-chart-bar"></i> Statistics
+          </h3>
+          <div class="stats">
+            <div class="stat-item">
+              <span class="stat-label">Strokes</span>
+              <span class="stat-value" id="strokeCount">0</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-label">Users Online</span>
+              <span class="stat-value" id="userCount">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="card-title">
+            <i class="fas fa-lightbulb"></i> Features
+          </h3>
+          <div class="features">
+            <div class="feature-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Real-time Sync</span>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Ghost Cursors</span>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Global Undo/Redo</span>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Multi-user Drawing</span>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
